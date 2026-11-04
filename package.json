@@ -1,0 +1,16 @@
+{
+  "name": "codeclue",
+  "productName": "CodeClue",
+  "version": "0.1.0",
+  "description": "A student-first coding IDE: VS Code-grade editing with BlueJ pedagogy — progressive clues, sandboxed runs, and a Code Pad.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "dependencies": {
+    "monaco-editor": "^0.52.2"
+  }
+}

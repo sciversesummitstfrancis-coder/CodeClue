@@ -1,0 +1,487 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; worker-src 'self' blob:; img-src 'self' data:;">
+  <title>CodeClue</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- ============================ splash ============================ -->
+  <div id="splash" aria-hidden="true">
+    <canvas id="splashCanvas"></canvas>
+    <div class="splash-aurora" aria-hidden="true"></div>
+    <div class="splash-grid" aria-hidden="true"></div>
+    <div class="splash-content">
+      <div class="splash-logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path class="sl-bracket" d="M22 12 7 32l15 20"/>
+          <path class="sl-bracket right" d="M42 12l15 20-15 20"/>
+          <circle class="sl-dot" cx="32" cy="32" r="3.2"/>
+        </svg>
+      </div>
+      <div class="splash-word" aria-label="CodeClue">
+        <span>C</span><span>o</span><span>d</span><span>e</span><span class="sl-gap"></span><span>C</span><span>l</span><span>u</span><span>e</span>
+      </div>
+      <div class="splash-tag"><span id="splashType"></span><i class="splash-caret"></i></div>
+      <div class="splash-bar"><span id="splashBar"></span></div>
+      <div class="splash-status" id="splashStatus">Waking up the tutor…</div>
+    </div>
+    <button id="splashSkip" class="splash-skip">Skip intro</button>
+  </div>
+
+  <!-- ========================== onboarding ========================== -->
+  <div id="onboarding" class="ob-hidden" aria-hidden="true">
+    <div class="ob-aurora" aria-hidden="true"></div>
+    <div class="ob-card">
+      <header class="ob-top">
+        <div class="ob-brand">
+          <span class="ob-mark" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 4 3 8l3 4M10 4l3 4-3 4" />
+            </svg>
+          </span>
+          CodeClue
+        </div>
+        <div class="ob-dots" id="obDots">
+          <span class="on"></span><span></span><span></span><span></span>
+        </div>
+        <button id="obClose" class="ob-close" title="Skip setup">Skip</button>
+      </header>
+
+      <div class="ob-body">
+        <section class="ob-step active" data-step="0">
+          <div class="ob-kicker">Welcome to CodeClue</div>
+          <h1>What should we call you?</h1>
+          <p class="ob-lead">Your tutor will use your name, remember your lessons, and review your code like a lab partner.</p>
+          <label class="ob-field">
+            <span>Your name</span>
+            <input id="obName" type="text" maxlength="24" autocomplete="off" spellcheck="false" placeholder="e.g. Aria" />
+          </label>
+          <div class="ob-error" id="obNameError"></div>
+          <div class="ob-actions">
+            <button class="ob-next" id="obNameNext" disabled>Continue <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="ob-step" data-step="1">
+          <div class="ob-kicker">Step 2 · Your goal</div>
+          <h1>What brings you here?</h1>
+          <p class="ob-lead">This decides where CodeClue drops you in. You can switch any time.</p>
+          <div class="ob-goals" id="obGoals">
+            <button class="ob-goal" data-goal="learn">
+              <span class="ob-goal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 5.5A2.5 2.5 0 016.5 3H20v15H6.5A2.5 2.5 0 004 20.5z"/><path d="M4 5.5v15"/><path d="M8 7h8M8 11h6"/>
+                </svg>
+              </span>
+              <span class="ob-goal-body">
+                <span class="ob-goal-title">Learn to code</span>
+                <span class="ob-goal-text">Guided lessons: idea → worked example → your turn. Best if you are starting out.</span>
+              </span>
+            </button>
+            <button class="ob-goal" data-goal="build">
+              <span class="ob-goal-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 6l-5 6 5 6M16 6l5 6-5 6"/><path d="M13 4l-2 16"/>
+                </svg>
+              </span>
+              <span class="ob-goal-body">
+                <span class="ob-goal-title">Build &amp; practice</span>
+                <span class="ob-goal-text">Open the editor with a starter file. Write freely and let the AI review your mistakes.</span>
+              </span>
+            </button>
+          </div>
+          <div class="ob-actions">
+            <button class="ob-back" data-ob-back>← Back</button>
+            <button class="ob-next" id="obGoalNext" disabled>Continue <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="ob-step" data-step="2">
+          <div class="ob-kicker">Step 3 · Your language</div>
+          <h1>Pick your first language</h1>
+          <p class="ob-lead">JavaScript and Python run inside the app. Java, C, C++ and Rust use the toolchains on this machine.</p>
+          <div class="ob-langs" id="obLangs"></div>
+          <div class="ob-actions">
+            <button class="ob-back" data-ob-back>← Back</button>
+            <button class="ob-next" id="obLangNext" disabled>Continue <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+
+        <section class="ob-step ob-ready" data-step="3">
+          <div class="ob-ready-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 12.5l5 5L20 6.5"/>
+            </svg>
+          </div>
+          <div class="ob-kicker">Ready</div>
+          <h1>Let's go, <span id="obReadyName">friend</span>.</h1>
+          <p class="ob-lead" id="obReadyText">Your workspace is set up.</p>
+          <div class="ob-actions center">
+            <button class="ob-next big" id="obStart">Start coding <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================== intro page =========================== -->
+  <div id="welcome" class="wc-hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="wcTitle">
+    <div class="wc-bg" aria-hidden="true">
+      <div class="wc-aurora"></div>
+      <div class="wc-grid"></div>
+    </div>
+    <div class="wc-scroll">
+      <header class="wc-top">
+        <div class="wc-brand">
+          <span class="wc-mark" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 4 3 8l3 4M10 4l3 4-3 4" />
+            </svg>
+          </span>
+          <span class="wc-word">CodeClue</span>
+        </div>
+        <button id="wcClose" class="wc-close" title="Close">Close</button>
+      </header>
+
+      <main class="wc-main">
+        <section class="wc-hero">
+          <div class="wc-kicker">A coding lab for students</div>
+          <h1 id="wcTitle">Learn the idea. <span>See the clue.</span><br />Build it yourself.</h1>
+          <p class="wc-lead">
+            CodeClue is a real editor with a patient tutor sitting beside it. You write the code,
+            you run it, and when it breaks you get a clue — never the finished answer.
+          </p>
+          <div class="wc-cta">
+            <button id="wcStart" class="wc-btn primary">Set up your tutor <span aria-hidden="true">→</span></button>
+            <button id="wcSkip" class="wc-btn ghost">Skip — take me to the editor</button>
+          </div>
+        </section>
+
+        <section class="wc-pillars" aria-label="What CodeClue does">
+          <article class="wc-pillar">
+            <span class="wc-pillar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 7.5A2.5 2.5 0 015.5 5H10l2 2h6.5A2.5 2.5 0 0121 9.5v8A2.5 2.5 0 0118.5 20h-13A2.5 2.5 0 013 17.5z"/>
+              </svg>
+            </span>
+            <h3>Classes, not a junk drawer</h3>
+            <p>BlueJ-style projects keep every class you write side by side, so <em>Robot</em> and <em>Calculator</em> stay neighbours — just like in the lab.</p>
+          </article>
+          <article class="wc-pillar">
+            <span class="wc-pillar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 5.5h6l2 2.5h8V19H4z"/><path d="M9 10l-2.5 3L9 16M14 10l2.5 3L14 16"/>
+              </svg>
+            </span>
+            <h3>It runs right here</h3>
+            <p>JavaScript and Python run inside the app with no setup. Java, C, C++ and Rust use the toolchains already on your machine.</p>
+          </article>
+          <article class="wc-pillar">
+            <span class="wc-pillar-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3l2.4 5.2 5.6.7-4.1 3.9 1.1 5.6-5-2.8-5 2.8 1.1-5.6L4 8.9l5.6-.7z"/>
+              </svg>
+            </span>
+            <h3>A tutor that never gives the answer</h3>
+            <p>Qwen reads the file you are editing and the output it just printed, then points at the mistake and offers the next small step.</p>
+          </article>
+        </section>
+
+        <section class="wc-langs" aria-label="Supported languages">
+          <span class="wc-langs-label">Languages</span>
+          <div id="wcLangs" class="wc-lang-list"></div>
+        </section>
+      </main>
+
+      <footer class="wc-foot">
+        <span>Free, offline-friendly, and yours — your projects stay as plain files on your disk.</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ======================== project launcher ======================== -->
+  <div id="projectLauncher" class="pl-hidden" aria-hidden="true">
+    <div class="pl-aurora" aria-hidden="true"></div>
+    <div class="pl-grid" aria-hidden="true"></div>
+    <div class="pl-inner">
+      <header class="pl-head">
+        <div class="pl-brand">
+          <span class="pl-mark" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6 4L3 8l3 4M10 4l3 4-3 4" />
+            </svg>
+          </span>
+          CodeClue
+        </div>
+        <div class="pl-head-right">
+          <span class="pl-workspace" id="plWorkspace"></span>
+          <button id="plClose" class="pl-close" title="Close the launcher">×</button>
+        </div>
+      </header>
+
+      <div class="pl-hero">
+        <section class="pl-empty">
+          <div class="pl-kicker">Projects</div>
+          <h1 id="plTitle">Create or open a project to start coding</h1>
+          <p id="plLead" class="pl-lead">A project keeps your classes together — or jump straight into your next lesson.</p>
+          <div class="pl-actions">
+            <button id="plNewProject" class="pl-btn primary">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 5.5h4l1.5 2h6.5V13H2z"/><path d="M2 5.5V3h4"/><path d="M8 7.5v4M6 9.5h4"/>
+              </svg>
+              New Project…
+            </button>
+            <button id="plOpenProject" class="pl-btn">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 5.5h4l1.5 2h6.5V13H2z"/><path d="M2 5.5V3h4"/>
+              </svg>
+              Open Project…
+            </button>
+            <button id="plContinue" class="pl-btn">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 3.5h4l1.5 2H14v7.5H3z"/><path d="M6.5 8.5l3 2-3 2z" fill="currentColor" stroke="none"/>
+              </svg>
+              <span id="plContinueLabel">Continue your course</span>
+            </button>
+            <button id="plQuick" class="pl-btn ghost">Quick start — no project</button>
+          </div>
+          <button id="plAbout" class="pl-about">What is CodeClue?</button>
+        </section>
+
+        <section class="pl-recent">
+          <h2>Recent projects</h2>
+          <div id="plProjects" class="pl-projects"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== modal ============================== -->
+  <div id="modal" class="modal-hidden" aria-hidden="true">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <form class="modal-card" id="modalForm">
+      <h2 id="modalTitle">Title</h2>
+      <div id="modalBody"></div>
+      <div class="modal-actions">
+        <button type="button" id="modalCancel" class="pl-btn">Cancel</button>
+        <button type="submit" id="modalOk" class="pl-btn primary">Create</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="app">
+
+    <header id="topbar">
+      <div class="brand">
+        <button id="brandMark" class="logo" title="What is CodeClue?" aria-label="What is CodeClue?">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 4 3 8l3 4M10 4l3 4-3 4" />
+          </svg>
+        </button>
+        <span class="name">CodeClue</span>
+        <span class="tagline">BlueJ × VS Code, for students</span>
+      </div>
+      <div class="top-actions">
+        <div class="project-wrap">
+          <button id="projectBtn" class="project-chip" title="Project menu" aria-haspopup="menu" aria-expanded="false">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2 5.5h4l1.5 2h6.5V13H2z"/><path d="M2 5.5V3h4"/>
+            </svg>
+            <span id="projectName">No project</span>
+            <span class="pc-caret" aria-hidden="true">▾</span>
+          </button>
+          <div id="projectMenu" class="menu" role="menu" hidden>
+            <button class="menu-item" data-pm="new-project" role="menuitem">New Project…</button>
+            <button class="menu-item" data-pm="open-project" role="menuitem">Open Project…</button>
+            <button class="menu-item" data-pm="new-class" role="menuitem">New Class…</button>
+            <div class="menu-sep" role="separator"></div>
+            <button class="menu-item" data-pm="launcher" role="menuitem">Project launcher…</button>
+            <button class="menu-item" data-pm="close-project" role="menuitem">Close Project</button>
+            <div class="menu-sep" role="separator"></div>
+            <div class="menu-label">Recent projects</div>
+            <div id="menuProjects" class="menu-projects"></div>
+          </div>
+        </div>
+        <span class="top-sep" aria-hidden="true"></span>
+        <label class="runner-label" for="runnerSel">Runner</label>
+        <select id="runnerSel" title="Auto uses the in-app sandbox for JS/Python and your real toolchains otherwise">
+          <option value="auto">Auto</option>
+          <option value="toolchain">Local toolchain</option>
+        </select>
+        <span class="top-sep" aria-hidden="true"></span>
+        <button id="runBtn" class="btn btn-primary" title="Run (Ctrl+Enter)">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="transform: translateX(1px);"><path d="M4.5 3.2v9.6L12.5 8z"/></svg>
+          Run
+        </button>
+        <button id="aiCheckBtn" class="btn btn-ghost ai-check" title="Ask Qwen to review your code for mistakes">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 1.8l5 2v4.1c0 3-2.1 5.1-5 6.3-2.9-1.2-5-3.3-5-6.3V3.8z"/><path d="M5.7 8.2l1.6 1.6 3-3.2"/>
+          </svg>
+          AI Check
+        </button>
+        <span class="top-sep" aria-hidden="true"></span>
+        <button id="clearBtn" class="btn btn-ghost" title="Clear output">Clear</button>
+        <button id="fsBtn" class="btn btn-ghost icon-btn" title="Fullscreen (F11)" aria-label="Toggle fullscreen">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4"/>
+          </svg>
+        </button>
+        <button id="profileBtn" class="profile-chip" title="Edit your profile">
+          <span class="pc-avatar" id="pcAvatar">?</span>
+          <span class="pc-name" id="pcName">Set up</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="body">
+      <aside id="sidebar">
+        <div class="side-tabs">
+          <button data-tab="missions" class="active">Lessons</button>
+          <button data-tab="files">Files</button>
+        </div>
+        <div id="missionsPane" class="pane active"></div>
+        <div id="filesPane" class="pane">
+          <div class="files-bar">
+            <span class="fb-icon" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 5.5h4l1.5 2h6.5V13H2z"/><path d="M2 5.5V3h4"/>
+              </svg>
+            </span>
+            <span id="wsName" class="ws-name"></span>
+            <button id="newClassBtn" class="fb-btn" title="Create a new class in this project (BlueJ style)" aria-label="New Class">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 1.5h5l3 3V14.5H4z"/><path d="M9 1.5v3h3"/><path d="M6.5 8.5h3M6.5 10.5h3"/>
+              </svg>
+            </button>
+            <button id="pickWs" class="fb-btn" title="Choose the workspace folder" aria-label="Workspace">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true">
+                <path d="M2 5.5h4l1.5 2h6.5V13H2z"/><path d="M2 5.5V3h4"/>
+              </svg>
+            </button>
+          </div>
+          <div id="tree"></div>
+        </div>
+      </aside>
+
+      <section id="workarea">
+        <div id="tabsBar"></div>
+        <div id="editorHost"></div>
+      </section>
+
+      <aside id="coach">
+        <div class="coach-tabs">
+          <button data-ctab="coach" class="active">Clue Coach</button>
+          <button data-ctab="ai">AI Tutor</button>
+          <span class="coach-spacer"></span>
+          <button id="coachToggle" class="coach-toggle" title="Hide the AI panel — gives the editor more room" aria-label="Hide the AI panel">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 4l-4 4 4 4"/>
+            </svg>
+          </button>
+        </div>
+
+        <div id="coachPane" class="cpane active">
+          <div class="coach-head">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.2"/>
+              <path d="M10.6 5.4 8.7 8.7 5.4 10.6l1.9-3.3z" fill="currentColor" stroke="none"/>
+            </svg>
+            Clue Coach
+          </div>
+          <div id="missionBox"></div>
+          <div class="coach-sub">Live hints from your code</div>
+          <div id="findings"><div class="finding empty">Start typing — the coach reads your program as you write.</div></div>
+          <div class="coach-sub ai-sub">
+            <span>Qwen review</span>
+            <button id="coachReviewBtn" class="mini-link" title="Ask Qwen to review your code">Check now</button>
+          </div>
+          <div id="aiFindings"><div class="finding empty">Qwen will point out mistakes here after AI Check, a failed run, or while Monitor is on.</div></div>
+        </div>
+
+        <div id="aiCoachPane" class="cpane">
+          <div class="ai-header">
+            <div class="ai-head-left">
+              <span class="ai-title">AI Tutor</span>
+              <span id="aiStatus" class="ai-status">· qwen2.5-coder:0.5b</span>
+            </div>
+            <div class="ai-head-right">
+              <label class="ai-monitor" title="Automatically review your code after a failed run or check">
+                <input type="checkbox" id="aiMonitor" checked />
+                <span>Monitor</span>
+              </label>
+              <select id="aiModelSel" class="ai-model" title="Tutor model"></select>
+            </div>
+          </div>
+          <div id="aiChat" class="ai-chat"></div>
+          <div class="ai-actions">
+            <button class="ai-quick" data-quick="hint" title="Ask for a progressive hint">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 1.8v1.4M8 12.8v1.4M3.4 8H2M14 8h-1.4M4.6 4.6 3.6 3.6M12.4 12.4l-1-1M4.6 11.4l-1 1M12.4 3.6l-1 1"/>
+                <circle cx="8" cy="8" r="2.6"/>
+              </svg>
+              <span>Hint</span>
+            </button>
+            <button class="ai-quick" data-quick="explain" title="Explain your code line by line">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2.5 3.5h11v9h-11z"/><path d="M4.8 6.5h6.4M4.8 9.5h4.4"/>
+              </svg>
+              <span>Explain</span>
+            </button>
+            <button class="ai-quick" data-quick="review" title="Let Qwen review your code for mistakes">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 1.8 13 4v4.2c0 3-2.1 5.2-5 6-2.9-.8-5-3-5-6V4z"/><path d="M5.8 8.2 7.4 9.8 10.4 6.6"/>
+              </svg>
+              <span>Review</span>
+            </button>
+          </div>
+          <div class="ai-input-wrap">
+            <textarea id="aiInput" placeholder="Ask the tutor… (it reads your open file)" rows="2" autocomplete="off" spellcheck="false"></textarea>
+            <button id="aiSend" class="btn btn-primary" title="Send (Ctrl+Enter)">Send</button>
+          </div>
+        </div>
+      </aside>
+      <button id="coachRestore" class="coach-restore" title="Show the AI panel" aria-label="Show the AI panel" hidden>AI</button>
+    </div>
+
+    <div id="panelGrip" title="Drag to resize the output panel"><span></span></div>
+
+    <section id="bottomPanel">
+      <div class="panel-tabs">
+        <button data-ptab="output" class="active">Output</button>
+        <button data-ptab="pad">Code Pad</button>
+        <span class="panel-spacer"></span>
+        <button id="panelExpand" class="panel-tool" title="Expand / restore panel (Ctrl+`)" aria-label="Expand output panel">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 2H2v4M10 2h4v4M6 14H2v-4M10 14h4v-4"/>
+          </svg>
+        </button>
+      </div>
+      <div id="outputPane" class="ppane active"></div>
+      <div id="padPane" class="ppane">
+        <div id="padOut" class="console"></div>
+        <input id="padInput" placeholder="Code Pad — type an expression, press Enter" autocomplete="off" spellcheck="false" />
+      </div>
+    </section>
+
+    <footer id="statusbar">
+      <span id="statusPos">Ln 1, Col 1</span>
+      <span id="statusLang"></span>
+      <span id="statusWs" class="ellipsis"></span>
+      <span class="spacer"></span>
+      <span id="statusTools"></span>
+    </footer>
+  </div>
+
+  <div id="hiddenFrames"></div>
+
+  <script src="../node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script src="./hint-engine.js"></script>
+  <script src="./runners.js"></script>
+  <script src="./exercises.js"></script>
+  <script src="./lessons.js"></script>
+  <script src="./app.js"></script>
+  <script src="./intro.js"></script>
+</body>
+</html>
