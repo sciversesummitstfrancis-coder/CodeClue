@@ -23,6 +23,8 @@ jobs:
           key: eb-linux-${{ hashFiles('package-lock.json') }}
       - run: npm ci
       - name: Build Linux packages
+        env:
+          DEBUG: electron-builder
         run: |
           npm run dist -- --linux appimage tar.xz deb --publish never 2>&1 | tee build-log.txt
           test ${PIPESTATUS[0]} -eq 0
