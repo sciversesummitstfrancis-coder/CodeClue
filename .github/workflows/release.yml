@@ -1,0 +1,67 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run dist -- --linux appimage tar.xz deb
+      - name: Build RPM from DEB via alien
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y alien
+          alien -r dist/*.deb
+          mkdir -p artifacts
+          cp dist/*.deb dist/*.AppImage dist/*.tar.gz artifacts/
+          cp *.rpm artifacts/ || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: artifacts
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run dist -- --win nsis
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: dist/*.exe
+
+  release:
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-artifacts
+          path: dist
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
