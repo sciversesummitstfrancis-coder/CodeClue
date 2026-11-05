@@ -1,7 +1,7 @@
 {
   "name": "codeclue",
   "productName": "CodeClue",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A student-first coding IDE: VS Code-grade editing with BlueJ pedagogy — progressive clues, sandboxed runs, and a Code Pad.",
   "author": "CodeClue <codeclue@example.com>",
   "main": "main.js",

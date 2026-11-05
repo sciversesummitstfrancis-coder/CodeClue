@@ -155,11 +155,21 @@ async function runPipeline(lang, source, fileName, timeoutMs, tools) {
       if (a === '_file_') return name;
       if (a === '_base_') return base;
       if (a === '_CLASS_') return base;
-      if (a === './_base_') return `./${base}`;
+      if (a === './_base_') {
+        // Windows CreateProcess resolves a relative program path against the
+        // CALLING process's cwd — not the child's cwd option — so './program'
+        // would never be found in the run dir. Spawn the absolute path.
+        const exe = process.platform === 'win32' ? `${base}.exe` : base;
+        return path.join(tmp, exe);
+      }
       return a;
     };
+    let tool = mapArg(gotcha[0]);
+    // Windows almost never installs `python3` (and no Node at all here), but it
+    // does have `python`; the probes detect both, so fall back cleanly.
+    if (lang === 'python' && tool === 'python3' && !tools?.python3 && tools?.python) tool = 'python';
     const args = gotcha.slice(1).map(mapArg);
-    const res = await runStep(mapArg(gotcha[0]), args, tmp, timeoutMs);
+    const res = await runStep(tool, args, tmp, timeoutMs);
     res.stage = 'run';
     return res;
   } finally {
@@ -186,7 +196,10 @@ async function saveConfig(cfg) {
 }
 
 function ensureWorkspace(dir) {
-  return path.isAbsolute(dir) ? dir : path.join(app.getPath('userData'), 'workspace');
+  // dir is undefined on a fresh install (no workspace picked yet) — path.isAbsolute
+  // throws on undefined, which would previously break ALL project IPC calls.
+  if (typeof dir === 'string' && dir.length > 0 && path.isAbsolute(dir)) return dir;
+  return path.join(app.getPath('userData'), 'workspace');
 }
 
 function guardRel(root, rel) {
@@ -635,7 +648,7 @@ ipcMain.handle('fs:createProject', async (_e, payload = {}) => {
   let n = 2;
   while (fsSync.existsSync(dir)) dir = path.join(ws, `${base} ${n++}`);
   await fs.mkdir(dir, { recursive: true });
-  const file = `main.${PROJECT_EXT[language]}`;
+  const file = language === 'java' ? 'Main.java' : `main.${PROJECT_EXT[language]}`;
   await fs.writeFile(path.join(dir, file), PROJECT_STARTERS[language] || '', 'utf8');
   await saveConfig({ ...cfg, projects: rememberProject(cfg, dir, language) });
   return { name: path.basename(dir), path: dir, language, file };

@@ -17,6 +17,7 @@ function balanceScan(code, pairs) {
   }
   const stack = [];
   let inS = null; // ' string quote char
+  let escNext = false; // the previous char was a backslash inside a string
   let inLine = false;
   let inBlock = false;
   let prev = '';
@@ -33,7 +34,8 @@ function balanceScan(code, pairs) {
       continue;
     }
     if (inS) {
-      if (c === '\\') { prev = c; continue; }
+      if (escNext) { escNext = false; prev = c; continue; }
+      if (c === '\\') { escNext = true; prev = c; continue; }
       if (c === inS) inS = null;
       prev = c;
       continue;
@@ -200,10 +202,13 @@ const PY_RULES = [
         const raw = lines[i];
         const t = raw.trim();
         if (!t || t.startsWith('#')) continue;
-        if (/(\\|,|\(|\[)\s*$/.test(t)) continue; // continuation
-        if (/^(def|if|elif|else|for|while|try|except|finally|with|class)\b/.test(t) && !/:\s*(#.*)?$/.test(t) && !/^\w+\s*=\s/.test(raw)) {
-          return { line: i + 1 };
-        }
+        const body = t.split('#')[0].trim(); // strip trailing comments
+        if (!body || /(\\|,|\(|\[)\s*$/.test(body)) continue; // continuation
+        if (!/^(def|if|elif|else|for|while|try|except|finally|with|class)\b/.test(body)) continue;
+        if (/^\w+\s*=/.test(body)) continue; // an assignment, not a real header
+        // e.g. "if x: print(x)" — a valid one-liner whose colon is mid-line.
+        if (/:/.test(body)) continue;
+        return { line: i + 1 };
       }
       return null;
     },

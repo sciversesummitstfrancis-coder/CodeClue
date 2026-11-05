@@ -986,7 +986,8 @@ async function openProject(p) {
   }
   // Empty project: drop in a starter file so there is something to run.
   const ext = PROJECT_EXT[state.project.language] || 'js';
-  const file = `main.${ext}`;
+  // Java requires a public class to live in a file named after the class.
+  const file = state.project.language === 'java' ? 'Main.java' : `main.${ext}`;
   const starter = CLASS_TEMPLATES[state.project.language]
     ? CLASS_TEMPLATES[state.project.language]('Main')
     : '';
@@ -1427,6 +1428,8 @@ function currentCodeContext() {
   return `The student is working in ${lang} (file: ${tab.name}). Their current code is:\n\`\`\`${tab.langRun}\n${tab.model.getValue()}\n\`\`\``;
 }
 
+let aiHistory = [];   // rolling {role, content} list so the tutor remembers the chat
+
 async function sendAIMessage(text) {
   if (!text.trim() || !aiConnected) return;
   clearAIEmpty();
@@ -1441,10 +1444,14 @@ async function sendAIMessage(text) {
   }
 
   try {
+    // Send the recent conversation, not just this message — otherwise the
+    // tutor forgets everything it said one turn ago.
+    const outgoing = [...aiHistory, { role: 'user', content: fullText }].slice(-12);
     const res = await api.ai.chat({
-      messages: [{ role: 'user', content: fullText }],
+      messages: outgoing,
       model: state.aiModel || undefined,
     });
+    aiHistory = [...outgoing, { role: 'assistant', content: res.content }].slice(-12);
     renderAIMessage(res.content, 'bot', res.model);
   } catch (e) {
     renderAIMessage('(AI error) ' + e.message, 'bot');
