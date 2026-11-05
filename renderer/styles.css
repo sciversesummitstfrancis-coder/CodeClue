@@ -1675,7 +1675,7 @@ select option { background: #151a21; color: var(--text); }
 #aiInput { min-height: 40px; border-radius: 8px; }
 #aiSend { align-self: flex-end; height: 34px; }
 .ai-empty {
-  margin: auto 0;
+  margin: var(--s-3) 0 auto;
   padding: var(--s-4) var(--s-3);
   border: 1px dashed var(--line);
   border-radius: var(--r-2);

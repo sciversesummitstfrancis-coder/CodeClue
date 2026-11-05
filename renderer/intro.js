@@ -99,6 +99,13 @@ function openCourse(p = intro.profile) {
   const lang = profile.lang || 'javascript';
 
   if (goal === 'learn' && languageHasLessons(lang)) {
+    // If the student already has a project open, don't spam another tab with
+    // a lesson — lessons live in the Lessons tab until they ask for one.
+    const hasProjectWork = typeof state !== 'undefined' && (state.project || state.tabs.some((t) => !t.mission));
+    if (hasProjectWork) {
+      appendConsole('sys', 'Working in your project. Lessons are in the Lessons tab whenever you want one.');
+      return;
+    }
     const first = EXERCISES.find((m) => m.lang === lang && !state.lessonDone.has(m.id))
       || EXERCISES.find((m) => m.lang === lang)
       || EXERCISES[0];

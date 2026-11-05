@@ -431,7 +431,7 @@ function openMission(m, opts = {}) {
     appendConsole('sys', 'Lessons are not part of build mode. Open a file from the Files tab instead.');
     return;
   }
-  openTab({ name: `missions/${m.id}`, mission: m, content: m.starter });
+  openTab({ name: m.title, mission: m, content: m.starter });
   if (!opts.silent) appendConsole('sys', `Mission opened: ${m.title} (${m.langLabel}). Write it, then Ctrl+Enter to run.`);
 }
 
