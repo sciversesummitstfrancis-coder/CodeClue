@@ -14,20 +14,35 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      - name: Cache Electron / electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: eb-linux-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - run: npm run dist -- --linux appimage tar.xz deb
+      - name: Build Linux packages
+        run: |
+          npm run dist -- --linux appimage tar.xz deb 2>&1 | tee build-log.txt
+          test ${PIPESTATUS[0]} -eq 0
       - name: Build RPM from DEB via alien
         run: |
           sudo apt-get update
           sudo apt-get install -y alien
           alien -r dist/*.deb
           mkdir -p artifacts
-          cp dist/*.deb dist/*.AppImage dist/*.tar.gz artifacts/
+          cp dist/*.deb dist/*.AppImage dist/*.tar.xz artifacts/
           cp *.rpm artifacts/ || true
       - uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
           path: artifacts
+      - name: Diagnose build failure
+        if: failure()
+        run: |
+          grep -nE "(error|Error|ERROR|failed|FATAL|cannot|ENOENT)" build-log.txt | tail -25 | while read -r l; do echo "::error::${l:0:250}"; done
+        shell: bash
 
   windows:
     runs-on: windows-latest
@@ -37,12 +52,28 @@ jobs:
         with:
           node-version: 20
           cache: 'npm'
+      - name: Cache Electron / electron-builder binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ github.LOCALAPPDATA }}\electron\Cache
+            ${{ github.LOCALAPPDATA }}\electron-builder\Cache
+          key: eb-win-${{ hashFiles('package-lock.json') }}
       - run: npm ci
-      - run: npm run dist -- --win nsis
+      - name: Build Windows installer
+        shell: bash
+        run: |
+          npm run dist -- --win nsis 2>&1 | tee build-log.txt
+          test ${PIPESTATUS[0]} -eq 0
       - uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
           path: dist/*.exe
+      - name: Diagnose build failure
+        if: failure()
+        shell: bash
+        run: |
+          grep -nE "(error|Error|ERROR|failed|FATAL|cannot|ENOENT)" build-log.txt | tail -25 | while read -r l; do echo "::error::${l:0:250}"; done
 
   release:
     needs: [linux, windows]
@@ -63,5 +94,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
