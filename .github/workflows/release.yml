@@ -26,16 +26,12 @@ jobs:
         env:
           DEBUG: electron-builder
         run: |
-          npm run dist -- --linux appimage tar.xz deb --publish never 2>&1 | tee build-log.txt
+          npm run dist -- --linux appimage tar.xz --publish never 2>&1 | tee build-log.txt
           test ${PIPESTATUS[0]} -eq 0
-      - name: Build RPM from DEB via alien
+      - name: Collect Linux artifacts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y alien
-          alien -r dist/*.deb
           mkdir -p artifacts
-          cp dist/*.deb dist/*.AppImage dist/*.tar.xz artifacts/
-          cp *.rpm artifacts/ || true
+          cp dist/*.AppImage dist/*.tar.xz artifacts/
       - uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
